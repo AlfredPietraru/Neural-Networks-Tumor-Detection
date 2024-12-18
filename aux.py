@@ -79,10 +79,12 @@ def balance_no_tumor_class(path_image_label_info : list[tuple]):
     shuffle(result)
     return result
 
-def get_training_testing_data():
+def get_training_testing_data(balanced : bool):
     training_info =  get_images_labels(TRAINING_DIR)
     test_info = get_images_labels(TESTING_DIR)
-    return balance_no_tumor_class(training_info), test_info
+    if (balanced):
+        return balance_no_tumor_class(training_info), test_info
+    return training_info, test_info
 
 def split_for_cross_validation(final_info: list[tuple], number_splits : int):
     validation_split = 1 / number_splits
