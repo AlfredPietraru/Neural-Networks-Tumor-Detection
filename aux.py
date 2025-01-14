@@ -114,3 +114,77 @@ def plot_data(training_loss, validation_loss, training_accuracy, validation_accu
 
   plt.tight_layout()
   plt.show()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  import random
+import functools
+
+BEST_MODEL_NUMBER = 1
+CONFIDENCE = 0.95
+
+def parameter_sets_equal(param1, param2):
+    for key in param1.keys():
+        if param1[key] != param2[key]: return False
+    return True
+
+def compute_next_parameters(all_parameters):
+    dictionary = {}
+    for key in all_parameters.keys():
+        dictionary[key] = random.choice(all_parameters[key])
+    return dictionary
+
+def nr_models_for_certainty(nr_models, nr_best_models):
+    out = np.array([1.0])
+    for i in range(nr_models):
+        out *= (nr_models - nr_best_models - i) / nr_models
+        if (1 - out > CONFIDENCE): return i
+    return i
+
+def all_models_paramters(all_parameters):
+    max_nr_models = functools.reduce(lambda a, b: a * b, list(map(lambda x: len(x), all_parameters.values())))
+    nr_models_neccesary = nr_models_for_certainty(max_nr_models, BEST_MODEL_NUMBER)
+    print("There will be ", nr_models_neccesary, "for certainty of ", CONFIDENCE, " that we found the right one.")
+    parameters_list = [compute_next_parameters(all_parameters)]
+    for i in range(nr_models_neccesary - 1):
+        while(1):
+            current_param = compute_next_parameters(all_parameters)
+            foundParameters = False
+            for param in parameters_list:
+                if (not parameter_sets_equal(current_param, param)):
+                    foundParameters = True
+                    break
+            if foundParameters:
+                parameters_list.append(current_param)
+                break
+    return parameters_list
+
+def compute_accuracy_for_all_models(all_parameters):
+    models_parameters = all_models_paramters(all_parameters)
+    best_accuracy = 0
+    best_parameters = None
+    for parameters in models_parameters:
+        acc = compute_cross_validation(parameters)
+        print(parameters, f"Test Accuracy: {acc:.2f}")
+        if (acc > best_accuracy):
+            best_accuracy = acc
+            best_parameters = parameters
+    return best_parameters, best_accuracy
+
+best_parameter, best_accuracy = compute_accuracy_for_all_models(grid_parameters)
